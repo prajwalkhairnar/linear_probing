@@ -22,6 +22,8 @@ from config import (
     MAX_NEW_TOKENS,
     MODEL_NAME,
     N_TARGET,
+    DEVICE,
+    DTYPE
 )
 from judge import judge_response
 
@@ -33,9 +35,9 @@ print(f"Loading tokenizer and model: {MODEL_NAME}")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
-    device_map="cuda",
-    torch_dtype=torch.float16,
-)
+    torch_dtype=DTYPE,
+    low_cpu_mem_usage=True
+).to(DEVICE)
 model.eval()
 
 n_layers = model.config.num_hidden_layers
@@ -62,7 +64,7 @@ def collect_activation_and_response(prompt: str) -> tuple[np.ndarray, str]:
     input_text = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    inputs = tokenizer(input_text, return_tensors="pt").to("cuda")
+    inputs = tokenizer(input_text, return_tensors="pt").to(DEVICE)
     prompt_length = inputs["input_ids"].shape[1]
 
     layer_activations: dict[int, np.ndarray] = {}
@@ -72,7 +74,7 @@ def collect_activation_and_response(prompt: str) -> tuple[np.ndarray, str]:
         def hook(module, input, output):
             # output[0] shape: [batch, seq_len, d_model]
             hidden = output[0][0, prompt_length - 1, :]
-            layer_activations[layer_idx] = hidden.detach().float().cpu().numpy()
+            layer_activations[layer_idx] = hidden.detach().to("cpu").float().numpy()
 
         return hook
 

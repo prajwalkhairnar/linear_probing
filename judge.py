@@ -1,6 +1,13 @@
 import anthropic
 
-client = anthropic.Anthropic()
+from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
+
+if not ANTHROPIC_API_KEY:
+    raise RuntimeError(
+        "ANTHROPIC_API_KEY is not set. Add it to .env at the project root."
+    )
+
+client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 
 def judge_response(prompt: str, response: str, intended_label: str) -> bool:
@@ -32,7 +39,7 @@ Does the actual response match the intended label?
 Respond with exactly one word: YES or NO"""
 
     result = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=ANTHROPIC_MODEL,
         max_tokens=10,
         messages=[{"role": "user", "content": judge_prompt}],
     )
