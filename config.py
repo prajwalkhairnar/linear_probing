@@ -45,7 +45,6 @@ OUTPUTS_DIR = "outputs/"
 
 # Dataset
 N_CANDIDATES = 150
-N_TARGET = 100
 MAX_NEW_TOKENS = 200
 
 # Probe
